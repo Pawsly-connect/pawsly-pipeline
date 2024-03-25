@@ -2,6 +2,11 @@ name: requirements-backend
 
 on:
   workflow_call:
+    inputs:
+      project-name:
+        description: 'Project name wich is gonna be the project identifier in Sonarcloud'
+        required: true
+        type: string
 
 jobs:
   sonarcloud:
