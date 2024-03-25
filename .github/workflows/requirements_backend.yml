@@ -3,15 +3,14 @@ name: requirements-backend
 on:
   workflow_call:
     inputs:
-      project-name:
-        description: 'Project name wich is gonna be the project identifier in Sonarcloud'
-        required: false
-        default: ${{ github.repository }}
+      project-key:
+        description: 'Project key wich is gonna be the project identifier in Sonarcloud'
+        required: true
         type: string
       organization:
         description: 'Organization name in github and sonar'
         required: false
-        default: "Pawsly-connect"
+        default: "pawsly-connect"
         type: string
 
 jobs:
@@ -28,7 +27,7 @@ jobs:
         args: >
           -Dsonar.branch.target=${{ github.event.pull_request.base.ref }}
           -Dsonar.branch.name=${{ github.event.pull_request.base.ref }}
-          -Dsonar.projectKey=${{ inputs.organization }}_${{ inputs.project-name }}
+          -Dsonar.projectKey=${{ inputs.project-key }}
           -Dsonar.organization=${{ inputs.organization }}
     - name: SonarCloud Verify results
       shell: bash
