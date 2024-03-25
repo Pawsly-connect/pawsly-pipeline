@@ -5,7 +5,13 @@ on:
     inputs:
       project-name:
         description: 'Project name wich is gonna be the project identifier in Sonarcloud'
-        required: true
+        required: false
+        default: ${{ github.repository }}
+        type: string
+      organization:
+        description: 'Organization name in github and sonar'
+        required: false
+        default: "Pawsly-connect"
         type: string
 
 jobs:
@@ -22,8 +28,10 @@ jobs:
         args: >
           -Dsonar.branch.target=${{ github.event.pull_request.head.ref }}
           -Dsonar.branch.name=${{ github.event.pull_request.head.ref }}
+          -Dsonar.projectKey=${{ inputs.organization }}_${{ inputs.project-name }}
+          -Dsonar.organization=${{ inputs.organization }}
     - name: SonarCloud Verify results
       shell: bash
       run: |
-        state_sonar=$(curl --location --request GET 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Pawsly-connect_${{ github.repository }}&branch=${{ github.event.pull_request.head.ref }}' | jq '.projectStatus.status')
+        state_sonar=$(curl --location --request GET 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=${{ inputs.organization }}_${{ inputs.project-name }}&branch=${{ github.event.pull_request.head.ref }}' | jq '.projectStatus.status')
         if [ "$state_sonar" != "\"OK\"" ]; then echo "Quality Gate with state: $state_sonar"; exit 1; else echo "Quality Gate OK"; exit 0; fi
