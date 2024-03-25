@@ -1,16 +1,24 @@
-sonarcloud:
-  runs-on: ubuntu-latest
-  steps:
-  - uses: actions/checkout@v4
-    with:
-      fetch-depth: 0
-  - name: Analyze with SonarCloud
-    uses: sonarsource/sonarcloud-github-action@master
-    with:
-      projectBaseDir: src
-      args: >
-        -Dsonar.organization=pawsly-connect
-        -Dsonar.projectKey=pawsly-connect
-        -Dsonar.sources=lib/
-        -Dsonar.test.exclusions=tests/**
-        -Dsonar.tests=tests/
+name: requirements-backend
+
+on:
+  workflow_call:
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Analyze with SonarCloud
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.branch.target=${{ github.event.pull_request.head.ref }}
+          -Dsonar.branch.name=${{ github.event.pull_request.head.ref }}
+    - name: SonarCloud Verify results
+      shell: bash
+      run: |
+        state_sonar=$(curl --location --request GET 'https://sonarcloud.io/api/qualitygates/project_status?projectKey=Pawsly-connect_${{ github.repository }}&branch=${{ github.event.pull_request.head.ref }}' | jq '.projectStatus.status')
+        if [ "$state_sonar" != "\"OK\"" ]; then echo "Quality Gate with state: $state_sonar"; exit 1; else echo "Quality Gate OK"; exit 0; fi
