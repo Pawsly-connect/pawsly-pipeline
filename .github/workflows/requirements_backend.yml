@@ -26,8 +26,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.branch.target=${{ github.event.pull_request.head.ref }}
-          -Dsonar.branch.name=${{ github.event.pull_request.head.ref }}
+          -Dsonar.branch.target=${{ github.event.pull_request.base.ref }}
+          -Dsonar.branch.name=${{ github.event.pull_request.base.ref }}
           -Dsonar.projectKey=${{ inputs.organization }}_${{ inputs.project-name }}
           -Dsonar.organization=${{ inputs.organization }}
     - name: SonarCloud Verify results
