@@ -1,0 +1,134 @@
+name: deploy-backend
+
+on:
+  workflow_call:
+    inputs:
+        environment: 
+            description: "Environment deploy"
+            required: true
+            type: string
+        node-version:
+            description: "Version for NodeJS"
+            required: false
+            type: string
+            default: "18.x"
+        build-command:
+            description: "Nodejs build command"
+            required: false
+            type: string
+            default: "npm run build"
+        role-assume:
+            description: "Role for authentication AWS"
+            required: true
+            type: string
+        aws-region:
+            description: "The AWS region"
+            default: us-east-1
+            required: false
+            type: string
+        function-name:
+            description: "Lambda function name"
+            required: true
+            type: string
+        files-to-compress:
+            description: "Files to compress and upload in aws"
+            required: true
+            type: string
+        environment-variables:
+            description: "Environment variables example {KeyName1=string,KeyName2=string} "
+            required: true
+            type: string
+        
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                node-version: ${{ inputs.node-version }}
+            - name: Restore cache
+              id: restore-cache
+              uses: actions/cache@v3
+              env:
+                cache-name: node-modules-dev
+              with:
+                path: node_modules
+                key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+            - name: Install Dependencies
+              if: steps.restore-cache.outputs.cache-hit != 'true'
+              run: |
+                npm ci
+            - name: Run Build
+              run: ${{ inputs.build-command }}
+            - name: Persist Build
+              uses: actions/upload-artifact@v2
+              with:
+                name: Build
+                path: build
+                retention-days: 1
+                if-no-files-found: error
+
+    deploy-lambda-aws:
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        needs:
+            - build
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                node-version: ${{ inputs.node-version }}
+            - name: Restore Build
+              uses: actions/download-artifact@v2
+              with:
+                name: Build
+                path: build
+            - name: Restore Cache
+              uses: actions/cache@v3
+              id: restore-cache
+              env:
+                cache-name: node-modules-prod
+              with:
+                path: node_modules
+                key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+            - name: Install Dependencies
+              if: steps.restore-cache.outputs.cache-hit != 'true'
+              run: |
+                npm ci --only=prod
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                role-to-assume: ${{ inputs.role-assume }}
+                aws-region: ${{ inputs.aws-region }}
+            - name: Deploy AWS Lambda
+              env:
+                FUNCTION_NAME: ${{ inputs.function-name }}
+                ENV_VARS: ${{ inputs.environment-variables }}
+                AWS_REGION: ${{ inputs.aws-region }}
+                FILES_TO_COMPRESS: ${{ inputs.files-to-compress }}
+              run: |
+                aws lambda update-function-configuration \
+                    --function-name "$FUNCTION_NAME" \
+                    --environment "$ENV_VARS" \
+                    --region "$AWS_REGION"
+
+                echo "Uploading lambda function's code..."
+                echo "Compressing lambda function's files..."
+                zip -qq -r payload.zip $FILES_TO_COMPRESS
+
+                aws lambda update-function-code --function-name "$FUNCTION_NAME" --publish --zip-file fileb://payload.zip --region "$AWS_REGION" 
+                
+                
+            
+
+
