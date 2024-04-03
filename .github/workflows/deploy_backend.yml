@@ -40,9 +40,6 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-        permissions:
-            id-token: write
-            contents: read
         steps:
             - uses: actions/checkout@v3
             - name: Setup Node
@@ -77,7 +74,7 @@ jobs:
         needs:
             - build
         permissions:
-            id-token: write
+            id-token: none
             contents: read
         steps:
             - uses: actions/checkout@v3
