@@ -74,7 +74,7 @@ jobs:
         needs:
             - build
         permissions:
-            id-token: none
+            id-token: write
             contents: read
         steps:
             - uses: actions/checkout@v3
