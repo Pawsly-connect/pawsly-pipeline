@@ -32,8 +32,9 @@ on:
             type: string
         environment-variables:
             description: "Environment variables example {KeyName1=string,KeyName2=string} "
-            required: true
+            required: false
             type: string
+            default: "{KeyName1='string',KeyName2='string'}"
         
 
 jobs:
