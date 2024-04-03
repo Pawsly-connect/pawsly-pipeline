@@ -17,10 +17,6 @@ on:
             required: false
             type: string
             default: "npm run build"
-        role-assume:
-            description: "Role for authentication AWS"
-            required: true
-            type: string
         aws-region:
             description: "The AWS region"
             default: us-east-1
