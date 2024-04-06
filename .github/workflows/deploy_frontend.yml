@@ -1,0 +1,132 @@
+name: deploy-frontend
+
+on:
+  workflow_call:
+    inputs:
+        environment: 
+            description: "Environment deploy"
+            required: true
+            type: string
+        node-version:
+            description: "Version for NodeJS"
+            required: false
+            type: string
+            default: "18.x"
+        build-command:
+            description: "Nodejs build command"
+            required: false
+            type: string
+            default: "npm run build"
+        aws-region:
+            description: "The AWS region"
+            default: us-east-1
+            required: false
+            type: string
+        bucket-name:
+            description: "S3 bucket name"
+            required: true
+            type: string
+        frontend-name:
+            description: "Frontend app name"
+            required: true
+            type: string
+        build-folder:
+            description: "Build folder path"
+            required: true
+            type: string
+        distribution-id:
+            description: "Cloudfront distribution id"
+            required: true
+            type: string
+        version:
+            description: "Version frontend app"
+            required: true
+            type: string
+        
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                node-version: ${{ inputs.node-version }}
+            - name: Restore cache
+              id: restore-cache
+              uses: actions/cache@v3
+              env:
+                cache-name: node-modules-dev
+              with:
+                path: node_modules
+                key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+            - name: Install Dependencies
+              if: steps.restore-cache.outputs.cache-hit != 'true'
+              run: |
+                npm ci
+            - name: Run Build
+              run: ${{ inputs.build-command }}
+            - name: Persist Build
+              uses: actions/upload-artifact@v2
+              with:
+                name: Build
+                path: build
+                retention-days: 1
+                if-no-files-found: error
+
+    deploy-lambda-aws:
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        needs:
+            - build
+        permissions:
+            id-token: write
+            contents: read
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                node-version: ${{ inputs.node-version }}
+            - name: Restore Build
+              uses: actions/download-artifact@v2
+              with:
+                name: Build
+                path: build
+            - name: Restore Cache
+              uses: actions/cache@v3
+              id: restore-cache
+              env:
+                cache-name: node-modules-prod
+              with:
+                path: node_modules
+                key: npm-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+            - name: Install Dependencies
+              if: steps.restore-cache.outputs.cache-hit != 'true'
+              run: |
+                npm ci --only=prod
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                role-to-assume: ${{ vars.AWS_ROLE_DEPLOY_BACKEND }}
+                aws-region: ${{ inputs.aws-region }}
+            - name: Deploy S3 Bucket
+              env:
+                BUCKET_NAME: ${{ inputs.bucket-name }}
+                APP_NAME: ${{ inputs.app-name }}
+                AWS_REGION: ${{ inputs.aws-region }}
+                BUILD_FOLDER: ${{ inputs.build-folder }}
+                VERSION: ${{ inputs.version }}
+              run: |
+                RELEASE_NAME="date_$(TZ=America/Bogota date '+%Y-%m-%d-%H:%M-%Z')-version_$VERSION"
+                aws s3 sync $BUILD_FOLDER s3://$BUCKET_NAME/$APP_NAME/release/$RELEASE_NAME --delete --region us-east-1 || exit 1
+                aws s3 sync s3://$BUCKET_NAME/$APP_NAME/release/$RELEASE_NAME s3://$BUCKET_NAME/$APP_NAME/app --delete --region us-east-1 || exit 1
+            - name: Cache Invalidation
+              env:
+                DISTRIBUTION_ID: ${{ inputs.distribution-id }}
+              run: |
+                aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID
+                
+
+
