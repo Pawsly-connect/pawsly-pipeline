@@ -113,7 +113,7 @@ jobs:
               run: |
                 aws lambda update-function-configuration \
                     --function-name $FUNCTION_NAME \
-                    --environment Variables=$ENV_VARS \
+                    --environment $ENV_VARS \
                     --region $AWS_REGION
 
                 echo "Uploading lambda function's code..."
