@@ -75,7 +75,7 @@ jobs:
                 retention-days: 1
                 if-no-files-found: error
 
-    deploy-lambda-aws:
+    deploy-frontend-aws:
         runs-on: ubuntu-latest
         environment: ${{ inputs.environment }}
         needs:
