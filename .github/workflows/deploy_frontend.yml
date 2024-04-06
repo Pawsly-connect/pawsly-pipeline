@@ -114,7 +114,7 @@ jobs:
             - name: Deploy S3 Bucket
               env:
                 BUCKET_NAME: ${{ inputs.bucket-name }}
-                APP_NAME: ${{ inputs.app-name }}
+                APP_NAME: ${{ inputs.frontend-name }}
                 AWS_REGION: ${{ inputs.aws-region }}
                 BUILD_FOLDER: ${{ inputs.build-folder }}
                 VERSION: ${{ inputs.version }}
