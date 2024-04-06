@@ -34,7 +34,7 @@ on:
             description: "Environment variables example {KeyName1=string,KeyName2=string} "
             required: false
             type: string
-            default: '{KeyName1="string",KeyName2="string"}'
+            default: toJSON({"KeyName1"="string","KeyName2"="string"})
         
 
 jobs:
