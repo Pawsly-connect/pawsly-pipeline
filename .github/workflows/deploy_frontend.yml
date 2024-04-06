@@ -119,7 +119,7 @@ jobs:
                 BUILD_FOLDER: ${{ inputs.build-folder }}
                 VERSION: ${{ inputs.version }}
               run: |
-                RELEASE_NAME="date_$(TZ=America/Bogota date '+%Y-%m-%d-%H:%M-%Z')-version_$VERSION"
+                RELEASE_NAME="date_$(TZ=America/Bogota date '+%Y-%m-%d-%H:%M-%Z')-version"
                 aws s3 sync $BUILD_FOLDER s3://$BUCKET_NAME/$APP_NAME/release/$RELEASE_NAME --delete --region us-east-1 || exit 1
                 aws s3 sync s3://$BUCKET_NAME/$APP_NAME/release/$RELEASE_NAME s3://$BUCKET_NAME/$APP_NAME/app --delete --region us-east-1 || exit 1
             - name: Cache Invalidation
