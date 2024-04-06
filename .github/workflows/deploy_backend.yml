@@ -112,15 +112,15 @@ jobs:
                 FILES_TO_COMPRESS: ${{ inputs.files-to-compress }}
               run: |
                 aws lambda update-function-configuration \
-                    --function-name "$FUNCTION_NAME" \
-                    --environment "$ENV_VARS" \
-                    --region "$AWS_REGION"
+                    --function-name $FUNCTION_NAME \
+                    --environment $ENV_VARS \
+                    --region $AWS_REGION
 
                 echo "Uploading lambda function's code..."
                 echo "Compressing lambda function's files..."
                 zip -qq -r payload.zip $FILES_TO_COMPRESS
 
-                aws lambda update-function-code --function-name "$FUNCTION_NAME" --publish --zip-file fileb://payload.zip --region "$AWS_REGION" 
+                aws lambda update-function-code --function-name $FUNCTION_NAME --publish --zip-file fileb://payload.zip --region $AWS_REGION 
                 
                 
             
