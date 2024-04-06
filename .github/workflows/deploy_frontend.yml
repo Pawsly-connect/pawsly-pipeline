@@ -126,7 +126,7 @@ jobs:
               env:
                 DISTRIBUTION_ID: ${{ inputs.distribution-id }}
               run: |
-                aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID
+                aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
                 
 
 
