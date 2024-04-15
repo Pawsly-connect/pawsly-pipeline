@@ -34,7 +34,6 @@ on:
             description: "Environment variables example {KeyName1=string,KeyName2=string} "
             required: false
             type: string
-            default: '{"Variables":{"KeyName1":"test1","KeyName2":"test2"}}'
         
 
 jobs:
@@ -113,7 +112,7 @@ jobs:
               run: |
                 aws lambda update-function-configuration \
                     --function-name $FUNCTION_NAME \
-                    --environment $ENV_VARS \
+                    --environment '{"Variables":$ENV_VARS}' \
                     --region $AWS_REGION
 
                 echo "Uploading lambda function's code..."
