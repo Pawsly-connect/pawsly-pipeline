@@ -7,6 +7,11 @@ on:
         description: 'Project key wich is gonna be the project identifier in Sonarcloud'
         required: true
         type: string
+      command_test:
+        description: 'Command to execute test coverage'
+        required: false
+        default: 'npm run test:coverage'
+        type: string
       organization:
         description: 'Organization name in github and sonar'
         required: false
@@ -24,7 +29,7 @@ jobs:
           node-version: 20.x
       - name: Install and build tests
         shell: bash
-        run: npm ci && npm run test:coverage
+        run: npm ci && ${{ inputs.command_test }}
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:

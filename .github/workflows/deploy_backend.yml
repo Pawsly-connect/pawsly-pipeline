@@ -31,10 +31,10 @@ on:
             required: true
             type: string
     secrets:
-        environment-variables:
-            description: "Environment variables example {KeyName1=string,KeyName2=string} "
+        ENV_VARS:
             required: false
-
+        AWS_ROLE_DEPLOY_BACKEND:
+            required: true
 
 jobs:
     build:
@@ -101,18 +101,29 @@ jobs:
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v2
               with:
-                role-to-assume: ${{ vars.AWS_ROLE_DEPLOY_BACKEND }}
+                role-to-assume: ${{ secrets.AWS_ROLE_DEPLOY_BACKEND }}
                 aws-region: ${{ inputs.aws-region }}
             - name: Deploy AWS Lambda
               env:
                 FUNCTION_NAME: ${{ inputs.function-name }}
-                ENV_VARS: ${{ inputs.environment-variables }}
+                ENV_VARS: ${{ secrets.ENV_VARS }}
                 AWS_REGION: ${{ inputs.aws-region }}
                 FILES_TO_COMPRESS: ${{ inputs.files-to-compress }}
               run: |
+                echo "Set environment variables"
+                for var in $VARS; do
+                    env_config=(${var//=/ })
+                    env_name=${env_config[0]}
+                    env_value=${env_config[1]}
+                    printf -v "$env_name" "$env_value"
+                    array_vars="${array_vars}\"${env_name}\":\"${env_value}\","
+                done
+                env_vars="{\"Variables\":{${array_vars%?}}}"
+
+                echo "Deploying Lambda"
                 aws lambda update-function-configuration \
                     --function-name $FUNCTION_NAME \
-                    --environment '{"Variables":$ENV_VARS}' \
+                    --environment $env_vars \
                     --region $AWS_REGION
 
                 echo "Uploading lambda function's code..."
