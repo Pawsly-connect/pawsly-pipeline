@@ -7,7 +7,7 @@ on:
         description: 'Project key wich is gonna be the project identifier in Sonarcloud'
         required: true
         type: string
-      command_test:
+      command-test:
         description: 'Command to execute test coverage'
         required: false
         default: 'npm run test:coverage'
