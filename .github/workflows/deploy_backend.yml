@@ -30,11 +30,11 @@ on:
             description: "Files to compress and upload in aws"
             required: true
             type: string
+    secrets:
         environment-variables:
             description: "Environment variables example {KeyName1=string,KeyName2=string} "
             required: false
-            type: string
-        
+
 
 jobs:
     build:
