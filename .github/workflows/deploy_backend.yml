@@ -112,6 +112,7 @@ jobs:
                 FILES_TO_COMPRESS: ${{ inputs.files-to-compress }}
               run: |
                 echo "Set environment variables"
+                VARS=$(echo $ENV_VARS | tr " " "\n")
                 for var in $VARS; do
                     env_config=(${var//=/ })
                     env_name=${env_config[0]}
