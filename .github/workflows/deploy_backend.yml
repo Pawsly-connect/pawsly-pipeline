@@ -112,9 +112,9 @@ jobs:
                 FILES_TO_COMPRESS: ${{ inputs.files-to-compress }}
               run: |
                 echo "Set environment variables"
-                ENV_VARS=$(echo $ENV_VARS | tr "\\" "_BS_")
-                ENV_VARS=$(echo $ENV_VARS | sed -r 's/-----BEGIN PRIVATE KEY-----/_BEGIN_/g')
-                ENV_VARS=$(echo $ENV_VARS | sed -r 's/-----END PRIVATE KEY-----/_END_/g')
+                ENV_VARS=$(echo $ENV_VARS | sed -r 's/\\/BACKSLASH/g')
+                ENV_VARS=$(echo $ENV_VARS | sed -r 's/-----BEGIN PRIVATE KEY-----/BEGINPRIVATEKEY/g')
+                ENV_VARS=$(echo $ENV_VARS | sed -r 's/-----END PRIVATE KEY-----/ENDPRIVATEKEY/g')
                 VARS=$(echo $ENV_VARS | tr " " "\n")
                 for var in $VARS; do
                     env_config=(${var//=/ })
@@ -124,9 +124,9 @@ jobs:
                     array_vars="${array_vars}\"${env_name}\":\"${env_value}\","
                 done
                 env_vars="{\"Variables\":{${array_vars%?}}}"
-                env_vars=$(echo $env_vars | sed -r 's/_BEGIN_/-----BEGIN PRIVATE KEY-----/g')
-                env_vars=$(echo $env_vars | sed -r 's/_END_/-----END PRIVATE KEY-----/g')
-                env_vars=$(echo $env_vars | tr "_BS_" "\\")
+                env_vars=$(echo $env_vars | sed -r 's/BEGINPRIVATEKEY/-----BEGIN PRIVATE KEY-----/g')
+                env_vars=$(echo $env_vars | sed -r 's/ENDPRIVATEKEY/-----END PRIVATE KEY-----/g')
+                env_vars=$(echo $env_vars | sed -r 's/BACKSLASH/\\/g')
 
                 echo "Deploying Lambda"
                 aws lambda update-function-configuration \
